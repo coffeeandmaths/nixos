@@ -10,7 +10,7 @@
 #    ../modules/starship.nix
 #     ../modules/bash.nix
 #     ../modules/bash.nix
-#     ../modules/git.nix
+      ./modules/git.nix
 
 
 
