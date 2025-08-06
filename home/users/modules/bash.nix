@@ -12,8 +12,6 @@
       checkg = "cd ${config.home.homeDirectory}/.dotfiles && nixos-rebuild build --flake .#nixos";
       cleancache = "sudo nix store gc";
       nsearch = "nix search nixpkgs";
-
-
     };
   };
 }

@@ -38,9 +38,6 @@
   # Configure console keymap
   console.keyMap = "uk";
 
-  # Enable CUPS to print documents.
-  services.printing.enable = true;
-
   # Enable sound with pipewire.
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
@@ -84,7 +81,28 @@
   wget
   git
   ];
+ #  Wide settings
+   # Enable CUPS printing
+     services.printing.enable = true;
 
+   # Use HPLIP with the plugin for HP support (e.g., scanning or proprietary features)
+     services.printing.drivers = [ pkgs.hplipWithPlugin ];
+     services.printing.browsing = true;
+     services.printing.defaultShared = true;
+     # Optional but recommended
+     hardware.printers.ensurePrinters = [];
+   # Enable scanner support
+     hardware.sane.enable = true;
+
+   # Allow network printer discovery via mDNS/Avahi
+     services.avahi = {
+      enable = true;
+      nssmdns4 = true;
+      openFirewall = true;
+     };
+
+   # Allow the CUPS web interface through the firewall
+     networking.firewall.allowedTCPPorts = [ 631 ];
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
   # programs.mtr.enable = true;
@@ -111,5 +129,6 @@
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "25.05"; # Did you read the comment?
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
 }
