@@ -25,6 +25,7 @@
     obsidian
     pdf2svg
     libreoffice
+    texstudio
     vscode
 #    sage
    pandoc
