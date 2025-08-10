@@ -38,7 +38,7 @@
   # Configure console keymap
   console.keyMap = "uk";
 
-  # Enable sound with pipewire.
+   # Enable sound with pipewire.
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
@@ -80,7 +80,7 @@
   #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
   wget
   git
-  ];
+ ];
  #  Wide settings
 
   # Some programs need SUID wrappers, can be configured further or are
