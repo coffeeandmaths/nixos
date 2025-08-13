@@ -63,7 +63,7 @@
     description = "Ramon Armeria";
     extraGroups = [ "networkmanager" "wheel" ];
     packages = with pkgs; [
-      kdePackages.kate
+    # kdePackages.kate
     #  thunderbird
     ];
   };
