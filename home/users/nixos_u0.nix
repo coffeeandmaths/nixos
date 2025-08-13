@@ -18,19 +18,19 @@
 
   ];
   home.packages = with pkgs; [
-nerd-fonts.jetbrains-mono
+  nerd-fonts.jetbrains-mono
   powerline-fonts
   gyre-fonts
     firefox
-    texlive.combined.scheme-full
-    tectonic
-    obsidian
-    pdf2svg
-    libreoffice
-    texstudio
-    vscode
+#    texlive.combined.scheme-full
+#    tectonic
+#    obsidian
+#    pdf2svg
+#    libreoffice
+#    texstudio
+#    vscode
 #    sage
-   pandoc
+#   pandoc
 #   quarto
 #    (python3.withPackages (ps: with ps; [
 #      manim
