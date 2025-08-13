@@ -63,11 +63,6 @@ useradd -m -G wheel -s /bin/bash <youruser>
 passwd <youruser>
 EDITOR=nano visudo    # uncomment the line:   %wheel ALL=(ALL) ALL
 
-# === After reboot: log in as root and create your user ===
-useradd -m -G wheel -s /bin/bash <youruser>
-passwd <youruser>
-EDITOR=nano visudo    # uncomment the line:   %wheel ALL=(ALL) ALL
-
 # Enable NetworkManager so Wi-Fi can be managed persistently
 nixos-rebuild switch --impure -I nixpkgs=channel:nixos-24.05 \
   -p "services.networkmanager.enable = true;"
