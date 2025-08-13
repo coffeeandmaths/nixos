@@ -63,6 +63,44 @@ useradd -m -G wheel -s /bin/bash <youruser>
 passwd <youruser>
 EDITOR=nano visudo    # uncomment the line:   %wheel ALL=(ALL) ALL
 
+# === After reboot: log in as root and create your user ===
+useradd -m -G wheel -s /bin/bash <youruser>
+passwd <youruser>
+EDITOR=nano visudo    # uncomment the line:   %wheel ALL=(ALL) ALL
+
+# Enable NetworkManager so Wi-Fi can be managed persistently
+nixos-rebuild switch --impure -I nixpkgs=channel:nixos-24.05 \
+  -p "services.networkmanager.enable = true;"
+systemctl enable NetworkManager
+systemctl start NetworkManager
+
+# (Optional) Connect to Wi-Fi now via text UI
+nmtui
+
+# Move the SSH key from root to your user
+mkdir -p /home/<youruser>/.ssh
+mv /root/.ssh/id_ed25519 /home/<youruser>/.ssh/
+chown -R <youruser>:<youruser> /home/<youruser>/.ssh
+chmod 700 /home/<youruser>/.ssh
+chmod 600 /home/<youruser>/.ssh/id_ed25519
+
+# Switch to your user session
+su - <youruser>
+
+# === Test GitHub SSH and clone your dotfiles ===
+ssh -T git@github.com            # should say "Hi <user>! You've successfully authenticated..."
+git clone git@github.com:<your-user>/<your-dotfiles-repo> ~/.dotfiles
+
+# === Make host match your flake target and deploy ===
+sudo hostnamectl set-hostname <hostname-in-flake>
+cd ~/.dotfiles
+sudo nixos-rebuild switch --flake .#<hostname-in-flake> -L
+
+# Reboot into your configured Plasma system
+sudo reboot
+
+
+
 # Move the SSH key from root to your user
 mkdir -p /home/<youruser>/.ssh
 mv /root/.ssh/id_ed25519 /home/<youruser>/.ssh/
