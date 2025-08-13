@@ -23,8 +23,8 @@ in {
         ./configuration.nix
         ./hardware-configuration.nix
         ./networking.nix
-        ./printer.nix
-        ./plasma.nix
+        # ./printer.nix
+        # ./plasma.nix
         #-----HOME MANAGER MODULES----------------
         home-manager.nixosModules.home-manager
          {
