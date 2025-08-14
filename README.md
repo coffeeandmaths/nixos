@@ -75,10 +75,19 @@ passwd <youruser>
 EDITOR=nano visudo    # uncomment the line:   %wheel ALL=(ALL) ALL
 
 # Enable NetworkManager so Wi-Fi can be managed persistently
+  nixpkgs.config.allowUnfree = true;
+  networking.networkmanager.enable = true;
+
 nixos-rebuild switch --impure -I nixpkgs=channel:nixos-24.05 \
   -p "services.networkmanager.enable = true;"
 systemctl enable NetworkManager
 systemctl start NetworkManager
+environment.systemPackages = with pkgs; [
+    vim
+    git
+  ];
+
+# sudo nixos-rebuild switch
 
 # (Optional) Connect to Wi-Fi now via text UI
 nmtui
