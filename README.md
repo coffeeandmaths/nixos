@@ -11,13 +11,24 @@ This guide lets you install NixOS from the **minimal ISO**, connect to Wi-Fi, pa
 ```bash
 # === Wi-Fi (on the minimal ISO) ===
 # Option A: direct wpa_supplicant (works everywhere)
-sudo systemctl start wpa_supplicant
-ip link                       # find your Wi-Fi interface, e.g. wlan0 / wlp2s0
-iwlist <wifi-iface> scan | grep ESSID
-wpa_passphrase "YOUR_SSID" "YOUR_WIFI_PASSWORD" | sudo tee /etc/wpa_supplicant.conf
-wpa_supplicant -B -i <wifi-iface> -c /etc/wpa_supplicant.conf
-dhclient <wifi-iface>
-ping -c 3 nixos.org
+ 1) Find your wireless interface (often wlan0)
+ip link            # or: iw dev
+
+# 2) Bring it up (replace wlan0 if different)
+sudo ip link set wlan0 up
+
+# 3) Create a WPA config (replace SSID and PASSWORD)
+#   This writes to a tmpfs on the ISO session—fine for the install step.
+wpa_passphrase "YourSSID" "YourPassword" | sudo tee /etc/wpa_supplicant.conf
+
+# 4) Connect (daemonize with -B)
+sudo wpa_supplicant -B -i wlan0 -c /etc/wpa_supplicant.conf
+
+# 5) Get an IP via DHCP
+sudo dhcpcd wlan0
+
+# 6) Test
+ping -c3 nixos.org
 
 # (Optional) Option B: interactive
 # nmtui  # connect and ensure you have internet
