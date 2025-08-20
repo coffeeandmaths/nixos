@@ -1,168 +1,63 @@
-# README.md — NixOS Install (Minimal ISO → Dotfiles → Plasma)
+## Booting and Logging 
+You are logged-in automatically as nixos. The nixos user account has an empty password so you can use sudo without a password:
+```
+sudo -i
+```
+You can use **loadkeys** to switch to your preferred keyboard layout. 
+## Networking
 
-This guide lets you install NixOS from the **minimal ISO**, connect to Wi-Fi, partition/format, copy an SSH key from a USB, clone your dotfiles, and deploy your flake to get Plasma running.
+To configure the wifi, first start wpa_supplicant with s**udo systemctl start wpa_supplicant**, then run **wpa_cli**. For most home networks, you need to type in the following commands:
+```
+> add_network
+0
 
-> **Assumptions:** Legacy **BIOS** (GRUB) + **ext4** root. Adjust device names (`/dev/sdX`), SSID, usernames, and repo paths as needed.
+> set_network 0 ssid "myhomenetwork"
+OK
 
----
+> set_network 0 psk "mypassword"
+OK
 
-## Install — copy/paste these commands in order
+> enable_network 0
+OK
 
-```bash
-# === Wi-Fi (on the minimal ISO) ===
-# Option A: direct wpa_supplicant (works everywhere)
- 1) Find your wireless interface (often wlan0)
-ip link            # or: iw dev
+```
 
-# 2) Bring it up (replace wlan0 if different)
-sudo ip link set wlan0 up
+## Partiioning
 
-# 3) Create a WPA config (replace SSID and PASSWORD)
-#   This writes to a tmpfs on the ISO session—fine for the install step.
-wpa_passphrase "YourSSID" "YourPassword" | sudo tee /etc/wpa_supplicant.conf
+Create a MBR partition table.
+```
+parted /dev/sda -- mklabel msdos
+```
+Add the root partition. This will fill the the disk except for the end part, where the 
+swap will live.
+```
+parted /dev/sda -- mkpart primary 1MB -8GB
+```
+Set the root partition’s boot flag to on. This allows the disk to be booted from.
+```
+parted /dev/sda -- set 1 boot on
+```
+Finally, add a swap partition. The size required will vary according to needs, here a 8GB one is created.
+```
+parted /dev/sda -- mkpart primary linux-swap -8GB 100%
+```
+### Formatting
+```
+mkfs.ext4 -L nixos /dev/sda1
+mkswap -L swap /dev/sda2
+```
 
-# 4) Connect (daemonize with -B)
-sudo wpa_supplicant -B -i wlan0 -c /etc/wpa_supplicant.conf
+## Installing 
 
-# 5) Get an IP via DHCP
-sudo dhcpcd wlan0
-
-# 6) Test
-ping -c3 nixos.org
-
-# (Optional) Option B: interactive
-# nmtui  # connect and ensure you have internet
-
-# === Disk partitioning (BIOS example on /dev/sda) ===
-lsblk
-cfdisk /dev/sda
-# In cfdisk create:
-#   /dev/sda1  1G     Linux filesystem  -> will be /boot (ext4)
-#   /dev/sda2  rest   Linux filesystem  -> will be /     (ext4)
-
-# === Filesystems ===
-mkfs.ext4 -F /dev/sda1
-mkfs.ext4 -F /dev/sda2
-
-# === Mount target ===
-mount /dev/sda2 /mnt
-mkdir -p /mnt/boot
-mount /dev/sda1 /mnt/boot
-
-# === Generate initial config for THIS machine ===
+```
+mount /dev/disk/by-label/nixos /mnt
+swapon /dev/sda2
 nixos-generate-config --root /mnt
+nano /mnt/etc/nixos/configuration.nix
+(Add : boot.loader.grub.device
 
-# === Copy your SSH private key from USB (temporary for root) ===
-# Plug your USB; identify it as, e.g., /dev/sdb1
-lsblk
-mkdir -p /mnt-usb
-mount /dev/sdb1 /mnt-usb
-mkdir -p /mnt/root/.ssh
-cp /mnt-usb/id_ed25519 /mnt/root/.ssh/
-chmod 700 /mnt/root/.ssh
-chmod 600 /mnt/root/.ssh/id_ed25519
 
-# === Base install (minimal, just to boot) ===
-nixos-install
-# Set a root password when prompted.
-reboot
 ```
 
-```bash
-# === After reboot: log in as root and create your user ===
-useradd -m -G wheel -s /bin/bash <youruser>
-passwd <youruser>
-EDITOR=nano visudo    # uncomment the line:   %wheel ALL=(ALL) ALL
-
-# Enable NetworkManager so Wi-Fi can be managed persistently
-  nixpkgs.config.allowUnfree = true;
-  networking.networkmanager.enable = true;
-
-nixos-rebuild switch --impure -I nixpkgs=channel:nixos-24.05 \
-  -p "services.networkmanager.enable = true;"
-systemctl enable NetworkManager
-systemctl start NetworkManager
-environment.systemPackages = with pkgs; [
-    vim
-    git
-  ];
-
-# sudo nixos-rebuild switch
-
-# (Optional) Connect to Wi-Fi now via text UI
-nmtui
-
-# Move the SSH key from root to your user
-mkdir -p /home/<youruser>/.ssh
-mv /root/.ssh/id_ed25519 /home/<youruser>/.ssh/
-chown -R <youruser>:<youruser> /home/<youruser>/.ssh
-chmod 700 /home/<youruser>/.ssh
-chmod 600 /home/<youruser>/.ssh/id_ed25519
-
-# Switch to your user session
-su - <youruser>
-
-# === Test GitHub SSH and clone your dotfiles ===
-ssh -T git@github.com            # should say "Hi <user>! You've successfully authenticated..."
-git clone git@github.com:<your-user>/<your-dotfiles-repo> ~/.dotfiles
-
-# === Make host match your flake target and deploy ===
-sudo hostnamectl set-hostname <hostname-in-flake>
-cd ~/.dotfiles
-sudo nixos-rebuild switch --flake .#<hostname-in-flake> -L
-
-# Reboot into your configured Plasma system
-sudo reboot
 
 
-
-# Move the SSH key from root to your user
-mkdir -p /home/<youruser>/.ssh
-mv /root/.ssh/id_ed25519 /home/<youruser>/.ssh/
-chown -R <youruser>:<youruser> /home/<youruser>/.ssh
-chmod 700 /home/<youruser>/.ssh
-chmod 600 /home/<youruser>/.ssh/id_ed25519
-
-# Switch to your user session
-su - <youruser>
-
-# === Test GitHub SSH and clone your dotfiles ===
-ssh -T git@github.com            # should say "Hi <user>! You've successfully authenticated..."
-git clone git@github.com:<your-user>/<your-dotfiles-repo> ~/.dotfiles
-
-# === Make host match your flake target and deploy ===
-sudo hostnamectl set-hostname <hostname-in-flake>
-cd ~/.dotfiles
-sudo nixos-rebuild switch --flake .#<hostname-in-flake> -L
-
-# Reboot into your configured Plasma system
-sudo reboot
-```
-
----
-
-## Recovery (if the new generation doesn’t boot)
-
-```bash
-# Boot the minimal ISO, then:
-lsblk
-mount /dev/sda2 /mnt
-mount /dev/sda1 /mnt/boot
-nixos-enter -r /mnt
-# Roll back or boot an older generation:
-ls -ltr /nix/var/nix/profiles | grep system-
-/nix/var/nix/profiles/system-*-link/bin/switch-to-configuration boot
-```
-
----
-
-## Notes
-
-- Adjust `/dev/sda` → your actual disk. Laptop NVMe may be `/dev/nvme0n1` with partitions `/dev/nvme0n1p1`, `/dev/nvme0n1p2`.
-- For **UEFI**, create an EFI partition (FAT32, ~512 MiB, type EF00) mounted at `/boot/efi`, and enable `systemd-boot` in your flake.  
-- For **Btrfs/ZFS/LUKS**, ensure matching `fileSystems` entries, `boot.initrd.supportedFilesystems`, and (for LUKS) `boot.initrd.luks.devices` in your flake/host module.
-- Always regenerate `hardware-configuration.nix` when moving to new hardware:
-  ```bash
-  nixos-generate-config --root /mnt
-  ```
-- Keep multiple generations by setting `configurationLimit` in your chosen bootloader.
